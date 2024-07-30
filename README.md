@@ -2,12 +2,12 @@
 
 This repo demonostrates model quantization using [nncf](https://github.com/openvinotoolkit/nncf), referencing the documentation at https://docs.openvino.ai/2023.3/notebooks/112-pytorch-post-training-quantization-nncf-with-output.html to demonstrate the performance benefit and accuracy tradeoff with the resnet50 model
 
-# Prerequisites
-* Ubuntu 24.04 or newer (for Intel ARC GPU kernel driver support. Tested with Ubuntu 24.04), or Windows 11 with WSL2 (graphics driver [101.5445](https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html) or newer)
-* Installed Docker and Docker-compose tools (for Linux) or Docker Desktop (for Windows)
+## Prerequisites
+* Ubuntu 24.04 with kernel 6.8.0-36-generic (for Intel GPU kernel driver support)
+* Installed Docker (for Linux)
 * Intel ARC series GPU (tested with Intel ARC A770 16GB and Intel(R) Core(TM) Ultra 5 125H integrated GPU)
 
-# Docker 
+## Docker 
 
 These samples utilize containers to fully encapsulate the example with minimial host dependencies.  Here are the instructions how to install docker:
 
@@ -45,3 +45,5 @@ To download the PyTorch Resnet50 model, quantize the fp32 model to int8 using nn
 $ ./run
 ```
 
+## Notes
+* Kernel 6.8.0-38-generic and later may cause a ARC GPU hang.  See https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2072755.  Use Kernel 6.8.0-36-generic or older
