@@ -1,0 +1,60 @@
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=america/los_angeles
+ENV PIP_ROOT_USER_ACTION=ignore
+
+# Base packages
+RUN apt update && \
+    apt install --no-install-recommends -q -y \
+    build-essential \
+    ocl-icd-libopencl1 \
+    software-properties-common \
+    libtbb12 \
+    wget 
+
+# Python
+RUN wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" && \
+  bash Miniforge3-$(uname)-$(uname -m).sh -b 
+
+# Level Zero
+RUN mkdir -p /tmp/gpu && \
+ cd /tmp/gpu && \
+ wget https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero_1.17.6+u22.04_amd64.deb && \
+ dpkg -i *.deb && \
+ rm *.deb
+
+# Intel GPU compute user-space drivers
+RUN mkdir -p /tmp/gpu && \
+ cd /tmp/gpu && \
+ wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17537.20/intel-igc-core_1.0.17537.20_amd64.deb && \
+ wget https://github.com/intel/intel-graphics-compiler/releases/download/igc-1.0.17537.20/intel-igc-opencl_1.0.17537.20_amd64.deb && \
+ wget https://github.com/intel/compute-runtime/releases/download/24.35.30872.22/intel-level-zero-gpu_1.3.30872.22_amd64.deb && \
+ wget https://github.com/intel/compute-runtime/releases/download/24.35.30872.22/intel-opencl-icd_24.35.30872.22_amd64.deb && \
+ wget https://github.com/intel/compute-runtime/releases/download/24.35.30872.22/libigdgmm12_22.5.0_amd64.deb && \
+ dpkg -i *.deb && \
+ rm *.deb
+
+# Intel NPU compute user-space drivers
+RUN mkdir -p /tmp/npu && \
+  cd /tmp/npu && \
+  wget https://github.com/intel/linux-npu-driver/releases/download/v1.8.0/intel-driver-compiler-npu_1.8.0.20240916-10885588273_ubuntu22.04_amd64.deb && \
+  wget https://github.com/intel/linux-npu-driver/releases/download/v1.8.0/intel-level-zero-npu_1.8.0.20240916-10885588273_ubuntu22.04_amd64.deb && \
+  dpkg -i *.deb && \
+  rm *.deb
+
+# OpenVINO via package
+RUN mkdir -p /opt/intel && \
+  wget https://storage.openvinotoolkit.org/repositories/openvino/packages/2024.4/linux/l_openvino_toolkit_ubuntu24_2024.4.0.16579.c3152d32c9c_x86_64.tgz --output-document openvino_2024.4.0.tgz && \
+  tar xf openvino_2024.4.0.tgz && \
+  rm openvino_2024.4.0.tgz && \
+  mv l_openvino_toolkit_ubuntu24_2024.4.0.16579.c3152d32c9c_x86_64 /opt/intel/openvino_2024.4.0 && \
+  cd /opt/intel/openvino_2024.4.0  && \
+  ./install_dependencies/install_openvino_dependencies.sh -y && \
+  /bin/bash -c "source /root/miniforge3/bin/activate && \
+  conda create -n ov python=3.10* -y" && \
+  /bin/bash -c "source /root/miniforge3/bin/activate ov && \
+  pip install --upgrade pip && \
+  pip install -r ./python/requirements.txt torch torchvision nncf jupyter"
+
+RUN /bin/bash -c "source /opt/intel/openvino_2024.4.0/setupvars.sh && \
+  /opt/intel/openvino_2024.4.0/samples/cpp/build_samples.sh"

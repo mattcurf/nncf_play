@@ -1,3 +1,13 @@
 #!/bin/bash
-docker build --progress=plain -t openvino-resnet50 .  
+
+if [ "$1" = "-f" ]; then
+  args+="--no-cache "
+fi
+
+arch=$(uname -m)
+if [ "$arch" == "arm64" ]; then
+  arch="aarch64"
+fi
+
+docker build --progress plain -t ${PWD##*/} $args -f Dockerfile.$arch .
 
